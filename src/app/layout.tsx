@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Wordmark } from "@/components/brand";
+import { HowThisWorks, Intro } from "@/components/intro";
+import { OnchainBadge } from "@/components/onchain-badge";
 import Link from "next/link";
 
 const geistSans = Geist({
@@ -27,11 +29,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-ink`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-paper text-ink`}>
         <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 pb-16 pt-5">
           <header className="mb-8 flex items-center justify-between">
             <Wordmark />
             <nav className="flex items-center gap-4 text-sm text-muted">
+              <OnchainBadge />
+              <HowThisWorks />
+              <Link href="/advantage" className="hover:text-ink">
+                Advantage
+              </Link>
               <Link href="/compare" className="hover:text-ink">
                 Compare
               </Link>
@@ -40,13 +47,14 @@ export default function RootLayout({
               </Link>
               <Link
                 href="/demo"
-                className="rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-bg hover:opacity-90"
+                className="btn-primary btn-primary-inline !w-auto !rounded-full !py-1.5 !text-xs"
               >
                 Guided demo
               </Link>
             </nav>
           </header>
           {children}
+          <Intro />
         </div>
       </body>
     </html>

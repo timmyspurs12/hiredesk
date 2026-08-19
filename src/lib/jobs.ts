@@ -77,15 +77,31 @@ export function appendEvent(jobId: string, event: Omit<JobEvent, "id" | "at">) {
   return job;
 }
 
-export function executeDemo(jobId: string, title: string, detail: string, protocol: string) {
-  return appendEvent(jobId, {
-    title,
-    detail,
-    protocol,
-    txHash: `0x${jobId}${"d".repeat(56)}`.slice(0, 66),
-    reason: "Executed the dry-run intent on the demo path.",
+export function recordExecute(
+  jobId: string,
+  input: {
+    title: string;
+    detail: string;
+    protocol: string;
+    reason?: string;
+    txHash?: string;
+    onchain?: boolean;
+  },
+) {
+  const job = getJob(jobId);
+  if (!job) return;
+  job.events = job.events.filter((e) => e.title !== input.title || e.status === "reverted");
+  job.events.unshift({
+    id: uid(),
+    at: new Date().toISOString(),
+    title: input.title,
+    detail: input.detail,
+    protocol: input.protocol,
+    reason: input.reason,
+    txHash: input.txHash,
     status: "ok",
   });
+  return upsertJob(job);
 }
 
 export function revokeJob(jobId: string) {

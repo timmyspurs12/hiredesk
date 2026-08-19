@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Mark } from "@/components/brand";
+import { FundPanel } from "@/components/fund-panel";
 import { DESKS } from "@/lib/desks";
-import { attemptAfterRevoke, executeDemo, getJob, revokeJob } from "@/lib/jobs";
+import { attemptAfterRevoke, getJob, recordExecute, revokeJob, upsertJob } from "@/lib/jobs";
 import { listingById } from "@/lib/listings";
 import { PRESETS } from "@/lib/presets";
 import type { AgentListing, Job } from "@/lib/types";
@@ -59,16 +60,40 @@ function LiveSession({
     .filter((p) => job.allowlist.includes(p.id))
     .map((p) => p.label);
 
-  function onExecute() {
-    const title =
-      agent.desk === "health-factor"
-        ? "Repay 42.00 USDT → Venus"
-        : agent.desk === "rebalancing"
-          ? "Collect + decrease Pancake LP"
-          : agent.desk === "grid"
-            ? "Buy WBNB with 10 USDT"
-            : "Mint 50 USDT on Venus";
-    executeDemo(job.id, title, "Dry-run intent executed on the demo path.", desk.title);
+  const [busy, setBusy] = useState(false);
+
+  async function onExecute() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/execute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: agent.id, onchain: job.onchain }),
+      });
+      const data = (await res.json()) as {
+        title?: string;
+        why?: string;
+        detail?: string;
+        transactionHash?: string | null;
+        onchain?: boolean;
+      };
+      recordExecute(job.id, {
+        title: data.title || "Agent action",
+        detail: data.detail || "Demo execute. No funds moved.",
+        protocol: desk.title,
+        reason: data.why,
+        txHash: data.transactionHash || undefined,
+        onchain: data.onchain,
+      });
+    } catch {
+      recordExecute(job.id, {
+        title: "Agent action",
+        detail: "Could not reach execute API. Still a demo session.",
+        protocol: desk.title,
+      });
+    }
+    setBusy(false);
     onChange();
   }
 
@@ -152,14 +177,21 @@ function LiveSession({
               Recent activity
             </div>
             <ul className="mt-3 space-y-3">
-              {job.events.map((e) => (
+              {job.events.slice(0, 5).map((e) => (
                 <li key={e.id} className="text-[13px]">
                   <div className={e.status === "reverted" ? "text-bad" : ""}>{e.title}</div>
                   <div className="text-[11px] text-muted">{e.detail}</div>
-                  {e.txHash && (
-                    <div className="font-mono text-[10px] text-muted">
-                      Hash {e.txHash.slice(0, 6)}…{e.txHash.slice(-4)} · demo
+                  {e.reason ? (
+                    <div className="mt-1 rounded-lg bg-white/5 px-2 py-1.5 text-[11px] leading-snug text-ink/85">
+                      Why: {e.reason}
                     </div>
+                  ) : null}
+                  {e.txHash ? (
+                    <div className="font-mono text-[10px] text-muted">
+                      Hash {e.txHash.slice(0, 6)}…{e.txHash.slice(-4)}
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-muted">No chain hash · demo</div>
                   )}
                 </li>
               ))}
@@ -171,14 +203,33 @@ function LiveSession({
               <button
                 type="button"
                 onClick={onExecute}
-                className="w-full rounded-2xl bg-ink py-3 text-sm font-semibold text-bg"
+                className="w-full rounded-2xl bg-white py-3 text-sm font-semibold text-black"
               >
                 Run dry-run action
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  revokeJob(job.id);
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/jobs/${job.id}/revoke`, { method: "POST" });
+                    const data = (await res.json()) as {
+                      onchain?: boolean;
+                      transactionHash?: string;
+                      error?: string;
+                    };
+                    const next = revokeJob(job.id);
+                    if (next && data.transactionHash) {
+                      next.revokeTx = data.transactionHash;
+                      next.onchain = Boolean(data.onchain);
+                      next.events[0].detail = data.onchain
+                        ? `Revoked on BSC testnet. ${data.transactionHash}`
+                        : next.events[0].detail;
+                      next.events[0].txHash = data.transactionHash;
+                      upsertJob(next);
+                    }
+                  } catch {
+                    revokeJob(job.id);
+                  }
                   onChange();
                 }}
                 className="w-full rounded-2xl bg-bad py-3.5 text-sm font-semibold tracking-wide text-white"
@@ -200,7 +251,7 @@ function LiveSession({
               </button>
               <Link
                 href={`/agent/${agent.id}`}
-                className="block w-full rounded-2xl bg-ink py-3 text-center text-sm font-semibold text-bg"
+                className="btn-primary"
               >
                 Hire a new session
               </Link>
@@ -208,6 +259,11 @@ function LiveSession({
           )}
         </div>
       </div>
+      {job.onchainNote === "grant_failed" && job.walletAddress ? (
+        <div className="mt-6 w-full max-w-[390px]">
+          <FundPanel address={job.walletAddress} />
+        </div>
+      ) : null}
       <p className="mt-6 max-w-sm text-center text-xs text-muted">
         Same chrome on every desk. After this screen, open{" "}
         <Link href="/desk/rebalancing" className="text-accent">

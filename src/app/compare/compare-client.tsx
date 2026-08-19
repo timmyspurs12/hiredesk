@@ -30,7 +30,7 @@ export function CompareClient() {
             type="button"
             onClick={() => toggle(a.id)}
             className={`rounded-full px-3 py-1 text-xs ${
-              ids.includes(a.id) ? "bg-ink text-bg" : "bg-card text-muted"
+              ids.includes(a.id) ? "bg-white text-black" : "bg-card text-muted"
             }`}
           >
             {a.name}

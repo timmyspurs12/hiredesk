@@ -84,5 +84,9 @@ export interface Job {
   };
   demo: boolean;
   onchain: boolean;
+  walletAddress?: string;
+  grantTx?: string;
+  revokeTx?: string;
+  onchainNote?: string;
   events: JobEvent[];
 }

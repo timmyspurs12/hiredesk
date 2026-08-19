@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildDryRun } from "@/lib/dry-run";
-import { createDemoJob } from "@/lib/jobs";
+import { createDemoJob, upsertJob } from "@/lib/jobs";
 import { PRESETS, defaultAllowlist } from "@/lib/presets";
-import type { AgentListing } from "@/lib/types";
+import type { AgentListing, Job } from "@/lib/types";
 
 export function HirePanel({ agent }: { agent: AgentListing }) {
   const router = useRouter();
@@ -15,6 +15,8 @@ export function HirePanel({ agent }: { agent: AgentListing }) {
   const [hours, setHours] = useState(24);
   const [hfMin, setHfMin] = useState("1.40");
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   const dry = useMemo(() => buildDryRun(agent.id, agent.desk), [agent]);
   const hireable = agent.dataTier === "reference" && dry.simulation === "success";
@@ -24,15 +26,35 @@ export function HirePanel({ agent }: { agent: AgentListing }) {
     setAllow((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   }
 
-  function hire() {
-    const job = createDemoJob({
+  async function hire() {
+    setBusy(true);
+    setErr(null);
+    const payload = {
       agentId: agent.id,
       spendCapUsdt: cap,
       expiryHours: hours,
       allowlist: allow,
       hfMin: agent.desk === "health-factor" ? hfMin : undefined,
-    });
-    router.push(`/session/${job.id}`);
+    };
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as { job?: Job; error?: string; warning?: string };
+      if (data.job) {
+        upsertJob(data.job);
+        router.push(`/session/${data.job.id}`);
+        return;
+      }
+      throw new Error(data.error || "Hire failed");
+    } catch {
+      const job = createDemoJob(payload);
+      router.push(`/session/${job.id}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!hireable) {
@@ -57,7 +79,7 @@ export function HirePanel({ agent }: { agent: AgentListing }) {
           {open ? "Hide" : "Advanced"} details
         </button>
         {open && (
-          <pre className="mt-3 overflow-x-auto rounded-xl bg-bg p-3 text-[11px] text-muted">
+          <pre className="mt-3 overflow-x-auto rounded-xl bg-paper p-3 text-[11px] text-muted">
             {JSON.stringify(dry, null, 2)}
           </pre>
         )}
@@ -75,7 +97,7 @@ export function HirePanel({ agent }: { agent: AgentListing }) {
           <input
             value={cap}
             onChange={(e) => setCap(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-line bg-bg px-3 py-2"
+            className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2"
           />
         </label>
         <label className="mt-3 block text-sm">
@@ -83,7 +105,7 @@ export function HirePanel({ agent }: { agent: AgentListing }) {
           <select
             value={hours}
             onChange={(e) => setHours(Number(e.target.value))}
-            className="mt-1 w-full rounded-xl border border-line bg-bg px-3 py-2"
+            className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2"
           >
             <option value={1}>1 hour</option>
             <option value={24}>24 hours</option>
@@ -117,7 +139,7 @@ export function HirePanel({ agent }: { agent: AgentListing }) {
             <input
               value={hfMin}
               onChange={(e) => setHfMin(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-line bg-bg px-3 py-2"
+              className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2"
             />
             <span className="mt-1 block text-xs text-muted">
               Not enforced by the session. The chain cannot read Venus HF.
@@ -125,15 +147,12 @@ export function HirePanel({ agent }: { agent: AgentListing }) {
           </label>
         )}
 
-        <button
-          type="button"
-          onClick={hire}
-          className="mt-5 w-full rounded-2xl bg-ink py-3 text-sm font-semibold text-bg"
-        >
-          Hire on guided demo
+        <button type="button" onClick={hire} disabled={busy} className="btn-primary mt-5">
+          {busy ? "Hiring…" : "Hire agent"}
         </button>
+        {err ? <p className="mt-2 text-center text-xs text-bad">{err}</p> : null}
         <p className="mt-2 text-center text-[11px] text-muted">
-          Demo session in this browser. Altana Keystore grant is the next wiring step.
+          If a testnet key is set, this writes an Altana session. Otherwise it stays a labeled demo.
         </p>
       </div>
     </div>

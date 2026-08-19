@@ -36,6 +36,9 @@ yarn-error.log*
 .env.*.local
 !.env.example
 
+# on-chain session public keys
+/data
+
 # vercel
 .vercel
 

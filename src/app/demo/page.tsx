@@ -7,7 +7,11 @@ export default function DemoPage() {
       <h1 className="mt-2 text-3xl font-semibold">No wallet. No Venus position. Still finish.</h1>
       <p className="mt-4 text-muted">
         Official Functionality: someone with zero Agent Studio knowledge, no dead end. This path
-        uses a shared demo account in your browser. It is labeled demo. Altana Keystore comes next.
+        uses a shared demo account in your browser. It is labeled demo. Optional:{" "}
+        <Link href="/setup" className="text-accent">
+          turn on a real testnet session
+        </Link>
+        .
       </p>
       <ol className="mt-8 list-decimal space-y-3 pl-5 text-sm">
         <li>Open HF-Sentinel.</li>
@@ -20,7 +24,7 @@ export default function DemoPage() {
       </ol>
       <Link
         href="/agent/hf-sentinel"
-        className="mt-8 inline-block rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-bg"
+        className="btn-primary btn-primary-inline mt-8"
       >
         Start with HF-Sentinel
       </Link>

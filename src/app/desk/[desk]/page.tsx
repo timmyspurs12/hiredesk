@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { DESK_ORDER, DESKS } from "@/lib/desks";
 import { listingsByDesk } from "@/lib/listings";
 import { StatusChip } from "@/components/status-chip";
+import { NetworkStrip } from "@/components/network-strip";
 import type { Desk } from "@/lib/types";
 
 export default async function DeskPage({
@@ -23,7 +24,7 @@ export default async function DeskPage({
           <Link
             key={s}
             href={`/desk/${s}`}
-            className={`rounded-full px-3 py-1 ${s === desk ? "bg-ink text-bg" : "bg-card text-muted"}`}
+            className={`rounded-full px-3 py-1 ${s === desk ? "bg-white text-black" : "bg-card text-muted"}`}
           >
             {DESKS[s].title}
           </Link>
