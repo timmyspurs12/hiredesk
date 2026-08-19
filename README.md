@@ -1,3 +1,5 @@
+**Live:** [https://hiredesk-ten.vercel.app](https://hiredesk-ten.vercel.app)  
+**Judge demo (no wallet):** [https://hiredesk-ten.vercel.app/demo](https://hiredesk-ten.vercel.app/demo)
 # HIREDESK
 
 Human marketplace for hiring AI agents on **BNB Smart Chain**.
@@ -8,7 +10,7 @@ You do **not** hand over a seed. You hire under a **spend cap**, a **contract al
 
 ## Judge path (2 minutes, no wallet)
 
-1. Open the live URL (or `npm run dev` → http://localhost:3000).
+1. Open the live URL (https://hiredesk-ten.vercel.app).
 2. Read the welcome guide, or skip.
 3. **Guided demo** → HF-Sentinel → read the dry run → **Hire agent**.
 4. **Run dry-run action** → read **Why**.
