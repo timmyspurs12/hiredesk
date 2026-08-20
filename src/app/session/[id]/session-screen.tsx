@@ -264,21 +264,29 @@ function LiveSession({
           <FundPanel address={job.walletAddress} />
         </div>
       ) : null}
-      <p className="mt-6 max-w-sm text-center text-xs text-muted">
-        Same chrome on every desk. After this screen, open{" "}
-        <Link href="/desk/rebalancing" className="text-accent">
-          Rebalancing
-        </Link>
-        ,{" "}
-        <Link href="/desk/grid" className="text-accent">
-          Grid
-        </Link>{" "}
-        and{" "}
-        <Link href="/desk/yield" className="text-accent">
-          Yield
-        </Link>
-        .
-      </p>
+      <div className="mt-6 w-full max-w-[390px]">
+        <p className="mb-2 text-center text-xs text-muted">Clip 8 — click a desk</p>
+        <div className="grid grid-cols-3 gap-2">
+          <Link
+            href="/desk/rebalancing"
+            className="rounded-xl bg-[#4ea2ff] px-2 py-3 text-center text-[13px] font-bold text-black"
+          >
+            Rebalancing
+          </Link>
+          <Link
+            href="/desk/grid"
+            className="rounded-xl bg-[#3dd68c] px-2 py-3 text-center text-[13px] font-bold text-black"
+          >
+            Grid
+          </Link>
+          <Link
+            href="/desk/yield"
+            className="rounded-xl bg-[#f5c542] px-2 py-3 text-center text-[13px] font-bold text-black"
+          >
+            Yield
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
