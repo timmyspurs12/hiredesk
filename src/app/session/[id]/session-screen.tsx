@@ -265,7 +265,7 @@ function LiveSession({
         </div>
       ) : null}
       <div className="mt-6 w-full max-w-[390px]">
-        <p className="mb-2 text-center text-xs text-muted">Clip 8 — click a desk</p>
+        <p className="mb-2 text-center text-xs text-muted">Same hire path on every desk</p>
         <div className="grid grid-cols-3 gap-2">
           <Link
             href="/desk/rebalancing"
